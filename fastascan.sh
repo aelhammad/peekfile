@@ -22,19 +22,30 @@
 # How many unique fasta ID's they contain in total
  
 
-if [[ -z $1 ]];then
-	 
-	fasta_num=$(find . -type f -name "*.fasta" -or -name "*.fa" | wc -l | awk '{$1=$1};1')
-	echo "There are $fasta_num fasta files in $PWD"
-	
+
+if [[ -z $1 ]]; then
+    fasta_files=$(find . -type f \( -name "*.fasta" -or -name "*.fa" \))
+
+    if [[ -z $fasta_files ]]; then
+        echo "There are not any FASTA files."
+    else
+
+	fasta_num=$(echo $fasta_files | wc -l | awk '{$1=$1};1')
+        uniq_headers=$(grep '>' $(find . -type f -name "*.fasta" -or -name "*.fa") | awk -F' ' '/>/{print $1}' | sort | uniq | wc -l |awk '{$1=$1};1')
+
+        echo "\n* Number of FASTA files: $fasta_num\n"
+        echo "* Number of unique headers: $uniq_headers\n"
+    fi
 else
-	fasta_num=$(find $1 -type f -name "*.fasta" -or -name "*.fa" | wc -l | awk '{$1=$1};1')
-        echo "There are $fasta_num fasta files in $1"
+    fasta_files=$(find "$1" -type f \( -name "*.fasta" -or -name "*.fa" \))
+
+    if [[ -z $fasta_files ]]; then
+        echo "There are not any FASTA files in $1."
+    else
+	fasta_num=$(echo $fasta_files| wc -l | awk '{$1=$1};1')
+        uniq_headers=$(grep '>' $(find $1 -type f -name "*.fasta" -or -name "*.fa") | awk -F' ' '/>/{print $1}' | sort | uniq | wc -l |awk '{$1=$1};1')
+        echo "\n* Number of FASTA files in $1: $fasta_num\n"
+        echo "* Number of unique headers: $uniq_headers\n"
+    fi
 fi
-
-
-
-
-
-
 

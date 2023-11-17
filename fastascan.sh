@@ -49,3 +49,13 @@ else
     fi
 fi
 
+
+echo $fasta_files
+
+for file in "$fasta_files"; do
+    if [[ -h "$file" ]]; then
+        echo "$file is a symbolic link."
+    else
+        echo "$file is NOT a symbolic link."
+    fi
+done

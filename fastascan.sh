@@ -52,16 +52,28 @@ fi
 
 
 if [[ -n $fasta_files ]]; then
-    echo "$fasta_files" | while read -r file; do
+
+    	echo "$fasta_files" | while read -r file; do
         if [[ -h "$file" ]]; then
             symlink= "Yes"
         else
             symlink="No"
         fi
-
+	
 	sequence_num=$(grep ">" $file | wc -l | awk '{$1=$1};1')
 	total_seqlen=$(cat $file | sed -E '/^>/!s/[^A-Za-z]//g' | grep -v '>'| tr -d "\n" | wc -c | awk '{$1=$1};1' )
-	echo $file "-> Is a symlink:" $symlink " | Number of sequences:" $sequence_num "| total sequence length: " $total_seqlen 
+	
+	
+	file_tester=$(cat $file | head | sed -E '/^>/!s/[^A-Za-z]//g' | grep -v '>'| tr -d "\n")
+	nucleotide_tester=$(echo $file_tester | egrep -i '^[ATCGN]+$')
+	
+	if [[ $file_tester == $nucleotide_tester ]];then 
+		content="Nucleotide based"
+	else 
+		content="Aminoacid based"
+	fi
+
+	echo $file "-> Is a symlink:" $symlink " | Number of sequences:" $sequence_num "| total sequence length: " $total_seqlen "| file content is" $content 
     done
 fi
 

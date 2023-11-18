@@ -31,7 +31,7 @@ if [[ -z $1 ]]; then
     else
 
 	fasta_num=$(echo $fasta_files | wc -l | awk '{$1=$1};1')
-        uniq_headers=$(grep '>' $(find . -type f -name "*.fasta" -or -name "*.fa") | awk -F' ' '/>/{print $1}' | sort | uniq | wc -l |awk '{$1=$1};1')
+        uniq_headers=$(grep '>' $(find . -type f -name "*.fasta" -or -name "*.fa") | awk -F' ' '/>/{print $1}' | awk -F '>' '{print $2}'| sort | uniq | wc -l | awk '{$1=$1};1')
 
         echo "\n* Number of FASTA files: $fasta_num\n"
         echo "* Number of unique headers: $uniq_headers\n"
@@ -43,19 +43,28 @@ else
         echo "There are not any FASTA files in $1."
     else
 	fasta_num=$(echo $fasta_files| wc -l | awk '{$1=$1};1')
-        uniq_headers=$(grep '>' $(find $1 -type f -name "*.fasta" -or -name "*.fa") | awk -F' ' '/>/{print $1}' | sort | uniq | wc -l |awk '{$1=$1};1')
+        uniq_headers=$(grep '>' $(find $1 -type f -name "*.fasta" -or -name "*.fa") | awk -F' ' '/>/{print $1}' | awk -F '>' '{print $2}'| sort | uniq | wc -l | awk '{$1=$1};1')
         echo "\n* Number of FASTA files in $1: $fasta_num\n"
         echo "* Number of unique headers: $uniq_headers\n"
     fi
 fi
 
 
-echo $fasta_files
 
-for file in "$fasta_files"; do
-    if [[ -h "$file" ]]; then
-        echo "$file is a symbolic link."
-    else
-        echo "$file is NOT a symbolic link."
-    fi
-done
+if [[ -n $fasta_files ]]; then
+    echo "$fasta_files" | while read -r file; do
+        if [[ -h "$file" ]]; then
+            symlink= "Yes"
+        else
+            symlink="No"
+        fi
+
+	sequence_num=$(grep ">" $file | wc -l | awk '{$1=$1};1')
+	total_seqlen=$(cat $file | sed -E '/^>/!s/[^A-Za-z]//g' | grep -v '>'| tr -d "\n" | wc -c | awk '{$1=$1};1' )
+	echo $file "-> Is a symlink:" $symlink " | Number of sequences:" $sequence_num "| total sequence length: " $total_seqlen 
+    done
+fi
+
+
+
+

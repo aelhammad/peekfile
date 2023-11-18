@@ -22,9 +22,8 @@
 # How many unique fasta ID's they contain in total
  
 
-
 if [[ -z $1 ]]; then
-    fasta_files=$(find . -type f \( -name "*.fasta" -or -name "*.fa" \))
+    fasta_files=$(find . -type f -name "*.fasta" -or -name "*.fa")
 
     if [[ -z $fasta_files ]]; then
         echo "There are not any FASTA files."
@@ -37,7 +36,7 @@ if [[ -z $1 ]]; then
         echo "* Number of unique headers: $uniq_headers\n"
     fi
 else
-    fasta_files=$(find "$1" -type f \( -name "*.fasta" -or -name "*.fa" \))
+    fasta_files=$(find "$1" -type f -name "*.fasta" -or -name "*.fa")
 
     if [[ -z $fasta_files ]]; then
         echo "There are not any FASTA files in $1."
@@ -48,8 +47,6 @@ else
         echo "* Number of unique headers: $uniq_headers\n"
     fi
 fi
-
-
 
 if [[ -n $fasta_files ]]; then
 
@@ -73,10 +70,25 @@ if [[ -n $fasta_files ]]; then
 		content="Aminoacid based"
 	fi
 
+	aes1=">-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------<"
+	echo $aes1
 	echo $file "-> Is a symlink:" $symlink " | Number of sequences:" $sequence_num "| total sequence length: " $total_seqlen "| file content is" $content 
-    done
+    	echo $aes1
+	aes2="+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+	line_number=$(cat $file | wc -l)
+	
+	if [[ -n $2 && $2 -gt 0 ]]; then
+		echo $aes2	
+    		if [[ $line_number -le $((2 * $2)) ]]; then
+        		cat $file
+    		else
+        		head -n $2 $file
+        		echo "..."
+        		tail -n $2 $file
+    		fi
+		echo $aes2
+	fi
+	
+
+	done
 fi
-
-
-
-

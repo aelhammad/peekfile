@@ -1,6 +1,9 @@
 #!/bin/zsh
 
 
+start_time=$(date +%s)
+
+
 ############################################
 # This script takes two optional arguments:#
 # fastascan -folder -number_of_lines       #
@@ -27,15 +30,18 @@ _  __/ / /_/ /_(__  )/ /_ / /_/ /_(__  )/ /__ / /_/ /_  / / /
 #Just for aesthetics
 aes1=">-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------<"
 aes2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*"
-#We see if the first positional argument is empty or not.
+yellow='\033[1;33m'
+reset='\033[0m'
 
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~FILE SUMMARY~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo -e "${yellow}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~FILE SUMMARY~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~${reset}"
+
+#echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~FILE SUMMARY~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 
 #To output the results in a more tidy way we will use an intermediate file to append the data.
 
 echo -e  "FILE PATH" '\t' "SYMLINK" '\t' "NUMBER OF SEQUENCES" '\t' "TOTAL SEQUENCE LENGTH" '\t' "FILE CONTENT" > fastascan_intermediate.txt
 
-
+#We see if the first positional argument is empty or not.
 if [[ -z $1 ]]; then
 
     fasta_files=$(find . \( -type f -o -type l \) -name "*.fasta" -or -name "*.fa")
@@ -134,4 +140,10 @@ if [[ -n $fasta_files ]]; then
 	#Remove the intermediate file.
 	rm fastascan_intermediate.txt
 
-fi
+fi 
+
+end_time=$(date +%s)
+
+runtime=$((end_time - start_time))
+echo "Script runtime: $runtime seconds"
+

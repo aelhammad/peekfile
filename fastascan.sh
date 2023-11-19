@@ -1,15 +1,6 @@
 #!/bin/zsh
 
 
-
-# ______   ______     ______     ______   ______     ______     ______     ______     __   __    
-#/\  ___\ /\  __ \   /\  ___\   /\__  _\ /\  __ \   /\  ___\   /\  ___\   /\  __ \   /\ "-.\ \   
-#\ \  __\ \ \  __ \  \ \___  \  \/_/\ \/ \ \  __ \  \ \___  \  \ \ \____  \ \  __ \  \ \ \-.  \  
-# \ \_\    \ \_\ \_\  \/\_____\    \ \_\  \ \_\ \_\  \/\_____\  \ \_____\  \ \_\ \_\  \ \_\\"\_\ 
-#  \/_/     \/_/\/_/   \/_____/     \/_/   \/_/\/_/   \/_____/   \/_____/   \/_/\/_/   \/_/ \/_/ 
-#                                                                                                
-
-
 ############################################
 # This script takes two optional arguments:#
 # fastascan -folder -number_of_lines       #
@@ -25,13 +16,30 @@
 # How many unique fasta ID's they contain in total
 # It also provides a header with useful information & prints file content depending on the number of lines provided.
 
+echo '
+________             _____
+___  __/_____ _________  /______ ___________________ _______
+__  /_ _  __ `/_  ___/  __/  __ `/_  ___/  ___/  __ `/_  __ \
+_  __/ / /_/ /_(__  )/ /_ / /_/ /_(__  )/ /__ / /_/ /_  / / /
+/_/    \__,_/ /____/ \__/ \__,_/ /____/ \___/ \__,_/ /_/ /_/
+'
 
-
+#Just for aesthetics
+aes1=">-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------<"
+aes2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*"
 #We see if the first positional argument is empty or not.
 
-if [[ -z $1 ]]; then
-    fasta_files=$(find . -type f -name "*.fasta" -or -name "*.fa")
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~FILE SUMMARY~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 
+#To output the results in a more tidy way we will use an intermediate file to append the data.
+
+echo -e  "FILE PATH" '\t' "SYMLINK" '\t' "NUMBER OF SEQUENCES" '\t' "TOTAL SEQUENCE LENGTH" '\t' "FILE CONTENT" > fastascan_intermediate.txt
+
+
+if [[ -z $1 ]]; then
+
+    fasta_files=$(find . \( -type f -o -type l \) -name "*.fasta" -or -name "*.fa")
+    
     if [[ -z $fasta_files ]]; then
 
 	#This condition returns a message if there are not any fasta files
@@ -43,34 +51,41 @@ if [[ -z $1 ]]; then
 	fasta_num=$(echo $fasta_files | wc -l | awk '{$1=$1};1')
         uniq_headers=$(grep '>' $(find . -type f -name "*.fasta" -or -name "*.fa") | awk -F' ' '/>/{print $1}' | awk -F '>' '{print $2}'| sort | uniq | wc -l | awk '{$1=$1};1')
 
-        echo "\n* Number of FASTA files: $fasta_num\n"
-        echo "* Number of unique headers: $uniq_headers\n"
+        echo "\n* NUMBER OF FASTA FILES: $fasta_num\n"
+        echo "* NUMBER OF UNIQUE HEADERS: $uniq_headers\n"
     fi
 else
 	
     #If the user does not provide any directory we will search inside the current one.
-    fasta_files=$(find "$1" -type f -name "*.fasta" -or -name "*.fa")
+    fasta_files=$(find $1 \( -type f -o -type l \) -name "*.fasta" -or -name "*.fa")
 
     if [[ -z $fasta_files ]]; then
         echo "There are not any FASTA files in $1."
     else
 	fasta_num=$(echo $fasta_files| wc -l | awk '{$1=$1};1')
         uniq_headers=$(grep '>' $(find $1 -type f -name "*.fasta" -or -name "*.fa") | awk -F' ' '/>/{print $1}' | awk -F '>' '{print $2}'| sort | uniq | wc -l | awk '{$1=$1};1')
-        echo "\n* Number of FASTA files in $1: $fasta_num\n"
-        echo "* Number of unique headers: $uniq_headers\n"
+        echo "\n* NUMBER OF FASTA FILES IN $1: $fasta_num\n"
+        echo "* NUMBER OF UNIQUE HEADERS: $uniq_headers\n"
     fi
 fi
+
+
 
 
 #Sees if fasta_files variable is not empty
 if [[ -n $fasta_files ]]; then
 	
+
+
+
 	#Testing if it is a symlink
-    	echo "$fasta_files" | while read -r file; do
-        if [[ -h "$file" ]]; then
-    	symlink="Yes"
+    	echo $fasta_files | while read -r file; do
+	#for file in $fasta_files; do
+	
+        if [[ -h $file ]]; then
+    		symlink="Yes"
         else
-            symlink="No"
+            	symlink="No"
         fi
 	
 	#Here we count the number of sequence, and total sequence lenght. It's important to keep in mind not counting newline characters for the total sequence_lenght
@@ -79,36 +94,44 @@ if [[ -n $fasta_files ]]; then
 	
 	#Here we use two string variables that are the file and the file without characters that are ATCGN, N sometimes appears in some nucleotide sequences as unknown nucleotdie. We just get the first 10 lines of each file (head) for the sake of efficency, to avoid the script being too slow when comparing huge fasta files.
 	file_tester=$(cat $file | head | sed -E '/^>/!s/[^A-Za-z]//g' | grep -v '>'| tr -d "\n")
-	nucleotide_tester=$(echo $file_tester | egrep -i '^[ATCGN]+$')
+	nucleotide_tester=$(echo $file_tester | egrep -i '^[ATCGNU]+$')
 	
-	if [[ $file_tester == $nucleotide_tester ]];then 
-		content="Nucleotide based"
+	if [[ -n $file_tester ]];then
+		if [[ $file_tester == $nucleotide_tester ]];then 
+			content="Nucleotide based"
+		else 
+			content="Aminoacid based"
+		fi
 	else 
-		content="Aminoacid based"
+		content="Empty"
 	fi
 
-	#Just for aesthetics
-	aes1=">-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------<"
-	echo $aes1
-	echo $file "-> Is a symlink:" $symlink " | Number of sequences:" $sequence_num "| total sequence length: " $total_seqlen "| file content is" $content 
-    	echo $aes1
-	aes2="+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-	line_number=$(cat $file | wc -l)
-	
 
+	#Just for aesthetics
+
+	line_number=$(cat $file | wc -l)
 	#Here we print the lines from each file depending on the N($2) value provided
 	if [[ -n $2 && $2 -gt 0 ]]; then
-		echo $aes2	
-    		if [[ $line_number -le $((2 * $2)) ]]; then
-        		cat $file
+		echo -e $aes2 '\n' $aes1 '\n' $file '\t' "Symlink:" $symlink '\t' "Sequence number:" $sequence_num '\t' "Total sequence length:" $total_seqlen '\t' "File content:" $content '\n' >> fastascan_intermediate.txt
+		
+		if [[ $line_number -le $((2 * $2)) ]]; then
+        		cat $file >> fastascan_intermediate.txt
     		else
-        		head -n $2 $file
-        		echo "..."
-        		tail -n $2 $file
+        		head -n $2 $file >> fastascan_intermediate.txt
+        		echo "..." >> fastascan_intermediate.txt
+        		tail -n $2 $file >> fastascan_intermediate.txt
     		fi
-		echo $aes2
+	else 
+		echo -e $file '\t' $symlink '\t' $sequence_num '\t' $total_seqlen '\t' $content  >> fastascan_intermediate.txt
 	fi
 	
 
 	done
+	
+	#This new command is only to print the output in a more legible way, it creates a table from the input data and sets '\t' as delimiter for this table.
+	column -t -s $'\t' fastascan_intermediate.txt
+
+	#Remove the intermediate file.
+	rm fastascan_intermediate.txt
+
 fi

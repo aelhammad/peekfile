@@ -42,6 +42,9 @@ echo -e "${yellow}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~FILE 
 
 echo -e  "FILE PATH" '\t' "SYMLINK" '\t' "NUMBER OF SEQUENCES" '\t' "TOTAL SEQUENCE LENGTH" '\t' "FILE CONTENT" > fastascan_intermediate.txt
 
+#output_string="FILE PATH\tSYMLINK\tNUMBER OF SEQUENCES\tTOTAL SEQUENCE LENGTH\tFILE CONTENT\n"
+
+
 #We see if the first positional argument is empty or not.
 if [[ -z $1 ]]; then
 
@@ -100,6 +103,7 @@ if [[ -n $fasta_files ]]; then
 	total_seqlen=$(cat $file | sed -E '/^>/!s/[^A-Za-z]//g' | grep -v '>'| tr -d "\n" | wc -c | awk '{$1=$1};1' )
 	
 	#Here we use two string variables that are the file and the file without characters that are ATCGN, N sometimes appears in some nucleotide sequences as unknown nucleotdie. We just get the first 10 lines of each file (head) for the sake of efficency, to avoid the script being too slow when comparing huge fasta files.
+	
 	file_tester=$(cat $file | head | sed -E '/^>/!s/[^A-Za-z]//g' | grep -v '>'| tr -d "\n")
 	nucleotide_tester=$(echo $file_tester | egrep -i '^[ATCGNU]+$')
 	
@@ -120,16 +124,26 @@ if [[ -n $fasta_files ]]; then
 	#Here we print the lines from each file depending on the N($2) value provided
 	if [[ -n $2 && $2 -gt 0 ]]; then
 		echo -e $aes2 '\n' $aes1 '\n' $file '\t' "Symlink:" $symlink '\t' "Sequence number:" $sequence_num '\t' "Total sequence length:" $total_seqlen '\t' "File content:" $content '\n' >> fastascan_intermediate.txt
-		
+		#output_string="${output_string}\n${aes2}\n${aes1}\n${file}\tSymlink: ${symlink}\tSequence number: ${sequence_num}\tTotal sequence length: ${total_seqlen}\tFile content: ${content}\n"
+
+
 		if [[ $line_number -le $((2 * $2)) ]]; then
         		cat $file >> fastascan_intermediate.txt
+			#file_content=$(cat $file)
+			#output_string="${output_string}\n{$file_content}\n"
     		else
         		head -n $2 $file >> fastascan_intermediate.txt
         		echo "..." >> fastascan_intermediate.txt
         		tail -n $2 $file >> fastascan_intermediate.txt
+			#file_head=$(head -n $2 $file)
+			#file_tail=$(tail -n $2 $file)
+			#output_string="${output_string}\n${file_head}\n...\n${file_tail}\n"
+
     		fi
 	else 
 		echo -e $file '\t' $symlink '\t' $sequence_num '\t' $total_seqlen '\t' $content  >> fastascan_intermediate.txt
+		#output_string="${output_string}\n${file}\t${symlink}\t${sequence_num}\t${total_seqlen}\t${content}"
+
 	fi
 	
 
@@ -137,6 +151,11 @@ if [[ -n $fasta_files ]]; then
 	
 	#This new command is only to print the output in a more legible way, it creates a table from the input data and sets '\t' as delimiter for this table.
 	column -t -s $'\t' fastascan_intermediate.txt
+	
+	#echo -e $output_string | column -t -s $'\t'
+
+	#Also we could cat the file directly to avoid using new commands
+	#cat fastascan_intermediate.txt
 
 	#Remove the intermediate file.
 	rm fastascan_intermediate.txt
@@ -148,3 +167,5 @@ end_time=$(date +%s)
 runtime=$((end_time - start_time))
 echo "Script runtime: $runtime seconds"
 
+#Testing the two approaches: using a string variable to store the output versus using an intermediate file
+#On a directory with 191 fasta files the string approach took 12 seconds vs 4 seconds for the intermediate file approach.

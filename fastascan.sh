@@ -33,6 +33,7 @@ _  __/ / /_/ /_(__  )/ /_ / /_/ /_(__  )/ /__ / /_/ /_  / / /
 
 aes1=">-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------<"
 aes2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*"
+#Add color to our string
 yellow='\033[1;33m'
 reset='\033[0m'
 echo -e "${yellow}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~FILE SUMMARY~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~${reset}"
@@ -46,7 +47,7 @@ echo -e  "FILE PATH" '\t' "SYMLINK" '\t' "NUMBER OF SEQUENCES" '\t' "TOTAL SEQUE
 
 #We see if the first positional argument is empty or not.
 if [[ -z $1 ]]; then
-
+    #To avoid problem with symbolic links it is important to add the -type l option.	
     fasta_files=$(find . \( -type f -o -type l \) -name "*.fasta" -or -name "*.fa")
     
     if [[ -z $fasta_files ]]; then
@@ -82,26 +83,28 @@ fi
 
 
 #Sees if fasta_files variable is not empty
-if [[ -n $fasta_files ]]; then
+	if [[ -n $fasta_files ]]; then
 	
 
 
 
 	#Testing if it is a symlink
     	echo $fasta_files | while read -r file; do
-	#for file in $fasta_files; do
 	
         if [[ -h $file ]]; then
+
     		symlink="Yes"
         else
             	symlink="No"
         fi
 	
-	#Here we count the number of sequence, and total sequence lenght. It's important to keep in mind not counting newline characters for the total sequence_lenght
+	#Here we count the number of sequences, and total sequence lenght. It's important to keep in mind not counting newline characters for the total sequence_lenght
+	
 	sequence_num=$(grep ">" $file | wc -l | awk '{$1=$1};1')
 	total_seqlen=$(cat $file | sed -E '/^>/!s/[^A-Za-z]//g' | grep -v '>'| tr -d "\n" | wc -c | awk '{$1=$1};1' )
 	
-	#Here we use two string variables that are the file and the file without characters that are ATCGN, N sometimes appears in some nucleotide sequences as unknown nucleotdie. We just get the first 10 lines of each file (head) for the sake of efficency, to avoid the script being too slow when comparing huge fasta files.
+	#Here we use two string variables that are the file and the file without characters that are ATCGN, N sometimes appears in some nucleotide sequences as unknown nucleotdie. I tried to just get the first 10 lines of each file (head) for the sake of efficency, however the difference is not that big and comparing the whole file we will be sure 100% about the content. 
+	#Here a regular experssion is used with egrep.
 	
 	file_tester=$(cat $file | sed -E '/^>/!s/[^A-Za-z]//g' | grep -v '>'| tr -d "\n")
 	nucleotide_tester=$(echo $file_tester | egrep -i '^[ATCGNU]+$')
@@ -116,16 +119,15 @@ if [[ -n $fasta_files ]]; then
 		content="Empty"
 	fi
 
-
-	#Just for aesthetics
-
 	line_number=$(cat $file | wc -l)
+	
 	#Here we print the lines from each file depending on the N($2) value provided
 	if [[ -n $2 && $2 -gt 0 ]]; then
+		
 		echo -e $aes2 '\n' $aes1 '\n' $file '\t' "Symlink:" $symlink '\t' "Sequence number:" $sequence_num '\t' "Total sequence length:" $total_seqlen '\t' "File content:" $content '\n' >> fastascan_intermediate.txt
-
-
+		
 		if [[ $line_number -le $((2 * $2)) ]]; then
+
         		cat $file >> fastascan_intermediate.txt
     		else
         		head -n $2 $file >> fastascan_intermediate.txt
@@ -145,7 +147,7 @@ if [[ -n $fasta_files ]]; then
 	column -t -s $'\t' fastascan_intermediate.txt
 	
 
-	#Also we could cat the file directly to avoid using new commands
+	#Also we could cat the file directly to avoid using new commands:
 	#cat fastascan_intermediate.txt
 
 	#Remove the intermediate file.
